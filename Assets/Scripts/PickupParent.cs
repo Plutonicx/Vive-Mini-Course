@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ public class PickupParent : MonoBehaviour {
     SteamVR_TrackedObject trackedObj;
     SteamVR_Controller.Device device;
 
+    public Transform sphere;
 
     void Awake () {
         trackedObj = GetComponent<SteamVR_TrackedObject>();
@@ -45,6 +47,14 @@ public class PickupParent : MonoBehaviour {
         {
             Debug.Log("You activated PressUp on the trigger.");
         }
+
+        if (device.GetPressUp(SteamVR_Controller.ButtonMask.Touchpad))
+        {
+            Debug.Log("You activated PressUp on the Touchpad.");
+            sphere.transform.position = new Vector3(0, 0, 0);
+            sphere.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            sphere.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+        }
     }
 
     private void OnTriggerStay(Collider col)
@@ -62,6 +72,24 @@ public class PickupParent : MonoBehaviour {
             Debug.Log("You have released Touch while colliding with " + col.name);
             col.gameObject.transform.SetParent(null);
             col.attachedRigidbody.isKinematic = false;
+
+            tossObject(col.attachedRigidbody);
         }
+    }
+
+    void tossObject(Rigidbody rigidBody)
+    {
+        Transform origin = trackedObj.origin ? trackedObj.origin : trackedObj.transform.parent;
+        if ( origin != null )
+        {
+            rigidBody.velocity = origin.TransformVector(device.velocity);
+            rigidBody.angularVelocity = origin.TransformVector(device.angularVelocity);
+        }
+        else
+        {
+            rigidBody.velocity = device.velocity;
+            rigidBody.angularVelocity = device.angularVelocity;
+        }
+        
     }
 }
